@@ -29,6 +29,7 @@ setup (
          'Gnosis_Utils',
          # tests only
          'simplejson',
+        'zope.datetime',
         ],
     zip_safe = False,
     entry_points = """
