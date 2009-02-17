@@ -1,0 +1,19 @@
+Metadata-Version: 1.0
+Name: zopen.frs.core
+Version: 0.1.1dev
+Summary: zopen frs management
+Home-page: http://pypi.zopen.cn/zopen.frs.core
+Author: panjy
+Author-email: panjunyong@gmail.com
+License: Private
+Description: UNKNOWN
+Keywords: zope3 z3c rpc server client operation
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Alpha
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python
+Classifier: Natural Language :: Chinese
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Internet :: WWW/HTTP
+Classifier: Framework :: Zope3

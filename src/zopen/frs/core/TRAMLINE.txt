@@ -1,0 +1,18 @@
+
+
+1. 需要对标准的mod_python进行修补，去除一个地方的flush
+
+2. apache::
+
+     <IfModule python_module>
+      RequestHeader set x_tramlined "true"
+      PythonDebug On
+      PythonPath "sys.path + ['/opt/eggs/zopen.frs.core/src']"
+      PythonInputFilter zopen.frs.core.tramline::inputfilter TRAMLINE_INPUT
+      PythonOutputFilter zopen.frs.core.tramline::outputfilter TRAMLINE_OUTPUT
+      SetInputFilter TRAMLINE_INPUT
+      SetOutputFilter TRAMLINE_OUTPUT
+      PythonOption tramline_path /var/everydo-frs/tramline
+      PythonAutoReload off
+     </IfModule>
+
