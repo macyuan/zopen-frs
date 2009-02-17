@@ -21,9 +21,8 @@ setup (
         'Topic :: Internet :: WWW/HTTP',
         'Framework :: Zope3'],
     url = 'http://pypi.zopen.cn/zopen.frs.core',
-    packages = find_packages('src'),
+    packages = find_packages(),
     include_package_data = True,
-    package_dir = {'':'src'},
     namespace_packages= ['zopen', 'zopen.frs'],
     install_requires = [
          'setuptools',
