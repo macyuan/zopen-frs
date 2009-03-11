@@ -235,7 +235,7 @@ class FRS(MetadataMixin, ManifestMixin, ArchiveSupportMixin, RecycleMixin, Cache
                 for item in self.walk('/' + name, topdown, onerror):
                     yield item
         else:
-            top_ospath = self.ospath(top)
+            top_ospath = os.path.normpath(self.ospath(top))
             top_ospath_len = len(top_ospath)
             for dirpath, dirnames, filenames in os.walk(top_ospath,topdown,onerror):
 
