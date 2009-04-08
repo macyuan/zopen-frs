@@ -2,6 +2,30 @@
 import simplejson as json
 import os
 
+#定义常见的文件夹类型
+Folder_Types = ['Folder',
+               'Blog',
+               'BlogFolder',
+               'HelpCenter',
+               'HelpCenterFAQFolder',
+               'HelpCenterHowToFolder',
+               'HelpCenterTutorialFolder',
+               'HelpCenterTutorial',
+               'COREBlog2',
+               'COREBlogCategory',
+               'COREBlogCategoryFolder',
+                ]
+
+def export(self):
+    """ 程序入口"""
+    info = getMetadata(self)
+    dump_root = os.path.join(os.environ['INSTANCE_HOME'], 'var', 'frsdump')
+    if not os.path.exists(dump_root):
+        os.makedirs(dump_root)
+    os.chdir(dump_root)
+    frsexport(info)
+    return "export success!"
+
 def getMetadata(self):
     """
     导出格式为:
@@ -10,67 +34,124 @@ def getMetadata(self):
     info = []
     for obj in self.contentValues():
         metadata = {}
+        #id为文件名
         metadata['id'] = unicode(obj.getId())
         metadata['title'] = unicode(obj.Title())
         metadata['creator'] = unicode(obj.Creator())
         metadata['description'] = unicode(obj.Description())
         metadata['modified'] = obj.modified().strftime("%Y-%m-%d %H:%M:%S")
         metadata['contenttype']= unicode(obj.getPortalTypeName())
-        if metadata['contenttype'] == 'Image':
-            metadata['mimetype'] = unicode(obj.getContentType())
-            metadata['data'] = str(obj.getRawImage().data)
-        elif metadata['contenttype'] == 'Document':
-            metadata['mimetype'] = unicode(obj.getContentType())
-            metadata['data'] = unicode(obj.getRawText())
-            if self.getDefaultPage() == obj.getId():
-                metadata['id'] = 'index.rst'
-        elif metadata['contenttype'] == 'News Item':
-            metadata['mimetype'] = unicode(obj.getContentType())
-            metadata['data'] = unicode(obj.CookedBody())
-        elif metadata['contenttype'] == 'File':
-            metadata['mimetype'] = unicode(obj.getContentType())
-            metadata['data'] = str(obj.getRawFile().data)
-        elif metadata['contenttype']== 'Folder':
+
+        if metadata['contenttype'] in Folder_Types:
+            #各种文件夹类型保存为文件夹
+            metadata['contenttype'] = 'Folder'
             subobject = getMetadata(obj)
             metadata['subobject'] = subobject
             metadata['keys'] = [ (key == obj.getDefaultPage() and 'index.rst' or \
                     key) for key in obj.contentIds()]
-            metadata['hidden_keys'] = [ (item.getId() == obj.getDefaultPage() \
-                and 'index.rst' or item.getId() ) for item in \
-                    obj.contentValues() if item.getExcludeFromNav()]
+            metadata['hidden_keys'] = [(item.getId() == obj.getDefaultPage() and 'index.rst'or item.getId())\
+               for item in obj.contentValues() if (hasattr(item,"getExcludeFromNav") and item.getExcludeFromNav())]
         else:
-            continue
+            metadata['mimetype'] = unicode(obj.getContentType())
+
+            if metadata['contenttype'] == 'Image':
+                if isinstance(obj.getRawImage(),str):
+                    metadata['data'] = obj.getRawImage()
+                else:
+                    metadata['data'] = str(obj.getRawImage().data)
+
+            elif metadata['contenttype'] == 'Document':
+                try:
+                    metadata['data'] = unicode(obj.getRawText())
+                except:
+                    continue
+                if self.getDefaultPage() == obj.getId():
+                  metadata['id'] = 'index.rst'
+
+            elif metadata['contenttype'] == 'File':
+                try:
+                    metadata['data'] = str(obj.getRawFile().data)
+                except:
+                    continue
+
+            elif metadata['contenttype'] == 'News Item':
+                #新闻保存为文本
+                metadata['contenttype'] = 'Document'
+                try:
+                    metadata['data'] = unicode(obj.CookedBody())
+                except:
+                    continue
+
+            elif metadata['contenttype'] == 'BlogEntry':
+                #博客日志保存为文本
+                metadata['contenttype'] = 'Document'
+                try:
+                    metadata['data'] = unicode(obj.getBody())
+                except:
+                    continue
+
+            elif metadata['contenttype'] == 'COREBlogEntry':
+                #博客日志保存为文本
+                metadata['contenttype'] = 'Document'
+                try:
+                    metadata['data'] = unicode(obj.getBody())
+                except:
+                    continue
+                metadata['modified'] = unicode(obj.Date())
+
+            elif metadata['contenttype'] == 'HelpCenterFAQ':
+                #FAQ保存为文本
+                metadata['contenttype'] = 'Document'
+                try:
+                    metadata['data'] = unicode(obj.getAnswer())
+                except:
+                    continue
+
+            elif metadata['contenttype'] == 'HelpCenterHowTo':
+                #HowTo保存为文本
+                metadata['contenttype'] = 'Document'
+                try:
+                    metadata['data'] = unicode(obj.getBody())
+                except:
+                    continue
+
+            elif metadata['contenttype'] == 'HelpCenterTutorialPage':
+                #Tutorial保存为文本
+                metadata['contenttype'] = 'Document'
+                try:
+                    metadata['data'] = unicode(obj.getBody())
+                except:
+                    continue
+
+            else:
+                continue
 
         info.append(metadata)
 
     return info
 
-def export(self):
-    dump_root = os.path.join(os.environ['INSTANCE_HOME'], 'var', 'frsdump')
-    if not os.path.exists(dump_root):
-        os.makedirs(dump_root)
-    os.chdir(dump_root)
-    info = getMetadata(self)
-    try:
-        frsexport(info)
-    except Exception ,e:
-        return e
-    return "export success!"
 
 def frsexport(all_files):
+    """ 导出到文件系统中 """
+
     #先导出当前层次的文件
     for newfile in all_files:
-        if newfile['contenttype']!='Folder':
+        if newfile['contenttype'] not in Folder_Types:
             mkfile(newfile)
+    #后从当前层次的文件夹开始迭代导出
     for newfolder in all_files:
-        if newfolder['contenttype']=='Folder':
-            dirpath = mkfolder(newfolder)
+        if newfolder['contenttype'] in Folder_Types:
             oldpath = os.getcwd()
+            dirpath = mkfile(newfolder,"folder")
             os.chdir(dirpath)
             frsexport(newfolder['subobject'])
             os.chdir(oldpath)
 
-def mkfolder(newfile):
+def mkfile(newfile,file_type="file"):
+    """ 导出文件和文件夹
+        file_type : file,folder
+    """
+    #构造元数据
     metadata = {}
     metadata['main'] = {}
     metadata['dublin'] = {}
@@ -80,7 +161,7 @@ def mkfolder(newfile):
     metadata['dublin']['description'] = newfile['description']
     metadata['dublin']['creators'] = (newfile['creator'],)
     metadata['dublin']['modified'] = newfile['modified']
-    os.mkdir(newfile['id'])
+    # 写入元数据
     frspath = os.path.join(os.getcwd(),'.frs',newfile['id'])
     if not os.path.exists(frspath):
         os.makedirs(frspath)
@@ -88,28 +169,14 @@ def mkfolder(newfile):
     f = file(metadatapath,'wb')
     json.dump(metadata,f,ensure_ascii=False,indent=4)
     f.close()
-    dirpath = os.path.join(os.getcwd(),newfile['id'])
-    return dirpath
-
-def mkfile(newfile):
-    metadata = {}
-    metadata['main'] = {}
-    metadata['dublin'] = {}
-    metadata['main']['id'] = newfile['id']
-    metadata['main']['contenttype'] = newfile['contenttype']
-    metadata['main']['mimetype'] = newfile['mimetype']
-    metadata['dublin']['title'] = newfile['title']
-    metadata['dublin']['description'] = newfile['description']
-    metadata['dublin']['creators'] = (newfile['creator'],)
-    metadata['dublin']['modified'] = newfile['modified']
-    out = file(newfile['id'],'w')
-    out.write(newfile['data'])
-    out.close()
-    frspath = os.path.join(os.getcwd(),'.frs',newfile['id'])
-    if not os.path.exists(frspath):
-        os.makedirs(frspath)
-    metadatapath = os.path.join(frspath,'metadata.json')
-    f = file(metadatapath,'w')
-    json.dump(metadata,f,ensure_ascii=False,indent=4)
-    f.close()
+    # 在文件系统中生成文件或文件夹,如果是文件夹返回其路径
+    if file_type=='folder':
+        if not os.path.exists(newfile['id']):
+            os.mkdir(newfile['id'])
+        dirpath = os.path.join(os.getcwd(),newfile['id'])
+        return dirpath
+    else:
+        out = file(newfile['id'],'w')
+        out.write(newfile['data'])
+        out.close()
 
