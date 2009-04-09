@@ -36,7 +36,7 @@ def getMetadata(self):
         metadata = {}
         #id为文件名
         metadata['id'] = unicode(obj.getId())
-        metadata['title'] = unicode(obj.Title())
+        metadata['title'] = unicode(obj.Title()) or unicode(obj.getId())
         metadata['creator'] = unicode(obj.Creator())
         metadata['description'] = unicode(obj.Description())
         metadata['modified'] = obj.modified().strftime("%Y-%m-%d %H:%M:%S")
