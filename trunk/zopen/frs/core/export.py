@@ -23,7 +23,10 @@ def export(self):
     if not os.path.exists(dump_root):
         os.makedirs(dump_root)
     os.chdir(dump_root)
-    frsexport(info)
+    try:
+        frsexport(info)
+    except Exception,e:
+        return e
     return "export success!"
 
 def getMetadata(self):
@@ -61,67 +64,43 @@ def getMetadata(self):
                     metadata['data'] = str(obj.getRawImage().data)
 
             elif metadata['contenttype'] == 'Document':
-                try:
-                    metadata['data'] = unicode(obj.getRawText())
-                except:
-                    continue
+                metadata['data'] = unicode(obj.getRawText())
                 if self.getDefaultPage() == obj.getId():
                   metadata['id'] = 'index.rst'
 
             elif metadata['contenttype'] == 'File':
-                try:
-                    metadata['data'] = str(obj.getRawFile().data)
-                except:
-                    continue
+                metadata['data'] = str(obj.getRawFile().data)
 
             elif metadata['contenttype'] == 'News Item':
                 #新闻保存为文本
                 metadata['contenttype'] = 'Document'
-                try:
-                    metadata['data'] = unicode(obj.CookedBody())
-                except:
-                    continue
+                metadata['data'] = unicode(obj.CookedBody())
 
             elif metadata['contenttype'] == 'BlogEntry':
                 #博客日志保存为文本
                 metadata['contenttype'] = 'Document'
-                try:
-                    metadata['data'] = unicode(obj.getBody())
-                except:
-                    continue
+                metadata['data'] = unicode(obj.getBody())
 
             elif metadata['contenttype'] == 'COREBlogEntry':
                 #博客日志保存为文本
                 metadata['contenttype'] = 'Document'
-                try:
-                    metadata['data'] = unicode(obj.getBody())
-                except:
-                    continue
+                metadata['data'] = unicode(obj.getBody())
                 metadata['modified'] = unicode(obj.Date())
 
             elif metadata['contenttype'] == 'HelpCenterFAQ':
                 #FAQ保存为文本
                 metadata['contenttype'] = 'Document'
-                try:
-                    metadata['data'] = unicode(obj.getAnswer())
-                except:
-                    continue
+                metadata['data'] = unicode(obj.getAnswer())
 
             elif metadata['contenttype'] == 'HelpCenterHowTo':
                 #HowTo保存为文本
                 metadata['contenttype'] = 'Document'
-                try:
-                    metadata['data'] = unicode(obj.getBody())
-                except:
-                    continue
+                metadata['data'] = unicode(obj.getBody())
 
             elif metadata['contenttype'] == 'HelpCenterTutorialPage':
                 #Tutorial保存为文本
                 metadata['contenttype'] = 'Document'
-                try:
-                    metadata['data'] = unicode(obj.getBody())
-                except:
-                    continue
+                metadata['data'] = unicode(obj.getBody())
 
             else:
                 continue
