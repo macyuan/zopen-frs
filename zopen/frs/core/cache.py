@@ -46,5 +46,6 @@ class CacheMixin:
         cache_dst_parent = os.path.dirname(cache_dst)
         if not os.path.exists( cache_dst_parent ):
             os.makedirs(cache_dst_parent )
-        ucopytree(cache_src, cache_dst)
+        if not os.path.exists(cache_dst):
+            ucopytree(cache_src, cache_dst)
 
