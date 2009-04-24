@@ -256,10 +256,11 @@ class FRS(MetadataMixin, ManifestMixin, ArchiveSupportMixin, RecycleMixin, Cache
         if self.exists(frsPath):
             self.rmtree(frsPath) 
 
-        if self.isfile(path):
-            self.remove(path)
-        else:
-            self.rmtree(path)
+        if self.exists(path):
+            if self.isfile(path):
+                self.remove(path)
+            else:
+                self.rmtree(path)
 
         CacheMixin.removeCache(self, path)
 
